@@ -42,7 +42,7 @@ export default function Home() {
   // "bg-blue-500 text-white hover:bg-blue-600"
   // "bg-red-500 text-white hover:bg-red-600"
   // "bg-white text-black hover:bg-gray-100"
-  const PRIMARY_BUTTON = "bg-red-500 text-blue-100 hover:opacity-90 transition";
+  const PRIMARY_BUTTON = "bg-red-500 <text-blue-900 hover:opacity-90 transition";
 
   // 👉 Change your background + text color
   // Examples:
@@ -256,7 +256,7 @@ Format:
 
           {/* Output */}
           <div className="mt-10">
-            <div className="bg-gray-950 border border-white/10 rounded-xl py-6 px-5 min-h-[160px]">
+            <div className="bg-gray-150 border border-white/10 rounded-xl py-6 px-5 min-h-[160px]">
               {ideas ? (
                 <div className="space-y-4 pb-2">
                   {ideas.split("\n").filter((line) => /^\d+\./.test(line.trim())).map((line, i) => (
@@ -266,7 +266,7 @@ Format:
                   ))}
                 </div>
               ) : (
-                <div className="text-gray-500 text-sm">
+                <div className="text-white-100 text-sm">
                   Ideas will show here...
                 </div>
               )}
