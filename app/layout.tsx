@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LKN AI Lab — Level 100",
-  description: "Build and deploy your first AI-powered app.",
+  title: "Euro Soccer Hub",
+  description: "European soccer news, scores, and standings for the Big 5 leagues.",
 };
 
 export default function RootLayout({
