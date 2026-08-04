@@ -42,13 +42,13 @@ function NewsList({ articles, showLeague }: { articles: NewsArticle[]; showLeagu
   return (
     <ul className="space-y-4">
       {articles.map((article, i) => (
-        <li key={i} className="border-b border-white/5 pb-3 last:border-none last:pb-0">
+        <li key={i} className="border-b border-zinc-300 pb-3 last:border-none last:pb-0">
           <div className="block group cursor-default">
-            <p className="font-medium text-sm group-hover:text-emerald-400 transition-colors">
+            <p className="font-medium text-sm text-zinc-900 group-hover:text-emerald-600 transition-colors">
               {article.title}
             </p>
             {article.description && (
-              <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{article.description}</p>
+              <p className="text-xs text-zinc-600 mt-1 line-clamp-2">{article.description}</p>
             )}
             <p className="text-xs text-zinc-500 mt-1">
               {showLeague && article.league ? `${article.league} · ` : ""}
@@ -71,13 +71,13 @@ export default function Home() {
   // ===============================
 
   const APP_NAME = "The Football Feed";
-  const BACKGROUND = "bg-zinc-950 text-white";
-  const CARD_STYLE = "bg-zinc-900 border border-white/10 rounded-xl";
-  const INPUT_STYLE = "bg-zinc-900 border border-white/10 text-white";
-  const TAB_ACTIVE = "bg-emerald-600 text-white";
-  const TAB_INACTIVE = "bg-zinc-800 text-zinc-400 hover:text-white";
-  const CHIP_ACTIVE = "bg-emerald-600 text-white border-emerald-500";
-  const CHIP_INACTIVE = "bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500";
+  const BACKGROUND = "bg-zinc-200 text-zinc-900";
+  const CARD_STYLE = "bg-zinc-100 border border-zinc-300 rounded-xl shadow-sm";
+  const INPUT_STYLE = "bg-zinc-100 border border-zinc-400 text-zinc-900";
+  const TAB_ACTIVE = "bg-emerald-600 text-white shadow-sm";
+  const TAB_INACTIVE = "bg-zinc-100 text-zinc-700 border border-zinc-300 hover:bg-zinc-50";
+  const CHIP_ACTIVE = "bg-emerald-600 text-white border-emerald-600";
+  const CHIP_INACTIVE = "bg-zinc-200 text-zinc-800 border-zinc-400 hover:border-zinc-500";
 
   // ===============================
   // STATE
@@ -148,7 +148,7 @@ export default function Home() {
           </div>
           <button
             onClick={() => setRefreshKey((k) => k + 1)}
-            className="text-xs text-zinc-400 hover:text-white"
+            className="text-xs text-zinc-500 hover:text-zinc-900"
           >
             Refresh
           </button>
@@ -156,11 +156,11 @@ export default function Home() {
 
         {/* Today's News — global top 5, no team filter */}
         <section className={`${CARD_STYLE} p-4 mb-6`}>
-          <h2 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide mb-3">
+          <h2 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
             Today&apos;s News
           </h2>
           {globalNews.length === 0 ? (
-            <p className="text-sm text-zinc-400">No headlines today. Check back later.</p>
+            <p className="text-sm text-zinc-500">No headlines today. Check back later.</p>
           ) : (
             <NewsList articles={globalNews} showLeague />
           )}
@@ -168,7 +168,7 @@ export default function Home() {
 
         {/* League News — sortable + follow teams */}
         <section className={`${CARD_STYLE} p-4 mb-6`}>
-          <h2 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide mb-3">
+          <h2 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
             League News
           </h2>
 
@@ -189,19 +189,19 @@ export default function Home() {
           </select>
 
           <div className="flex justify-between items-center mb-3">
-            <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+            <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
               Follow Teams
             </h3>
             <button
               onClick={() => setShowTeamPicker((v) => !v)}
-              className="text-xs text-zinc-400 hover:text-white"
+              className="text-xs text-zinc-500 hover:text-zinc-900"
             >
               {showTeamPicker ? "Hide" : "+ Add"}
             </button>
           </div>
 
           {followedTeams.length === 0 && !showTeamPicker && (
-            <p className="text-sm text-zinc-400 mb-4">
+            <p className="text-sm text-zinc-500 mb-4">
               Follow teams to filter news and scores.
             </p>
           )}
@@ -240,13 +240,13 @@ export default function Home() {
           )}
 
           {filterArticles.length === 0 && (
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-500">
               No headlines today for {filterLabel}. Check back later.
             </p>
           )}
 
           {filterArticles.length > 0 && filteredArticles.length === 0 && followedTeams.length > 0 && (
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-500">
               No headlines today mentioning your followed teams.
             </p>
           )}
@@ -274,17 +274,17 @@ export default function Home() {
         {/* Tab content */}
         <section className={`${CARD_STYLE} p-6 min-h-[120px] flex items-center justify-center`}>
           {activeTab === "scores" && (
-            <p className="text-sm text-zinc-400 text-center">
+            <p className="text-sm text-zinc-500 text-center">
               Scores coming in v2 — live fixtures for {filterLabel}.
             </p>
           )}
           {activeTab === "standings" && (
-            <p className="text-sm text-zinc-400 text-center">
+            <p className="text-sm text-zinc-500 text-center">
               Standings coming in v3 — league table for {filterLabel}.
             </p>
           )}
           {activeTab === "minigames" && (
-            <p className="text-sm text-zinc-400 text-center">
+            <p className="text-sm text-zinc-500 text-center">
               Minigames coming soon.
             </p>
           )}
