@@ -29,6 +29,7 @@ import {
   toggleFollowedTeam,
   type FollowedTeamsMap,
 } from "@/lib/followed-teams";
+import { FootballFeedLogo } from "@/components/football-feed-logo";
 
 type Tab = "scores" | "standings" | "minigames";
 
@@ -69,7 +70,7 @@ export default function Home() {
   // CONFIG (CUSTOMIZE YOUR APP)
   // ===============================
 
-  const APP_NAME = "Euro Soccer Hub";
+  const APP_NAME = "The Football Feed";
   const BACKGROUND = "bg-zinc-950 text-white";
   const CARD_STYLE = "bg-zinc-900 border border-white/10 rounded-xl";
   const INPUT_STYLE = "bg-zinc-900 border border-white/10 text-white";
@@ -139,7 +140,12 @@ export default function Home() {
 
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">{APP_NAME}</h1>
+          <div className="flex items-center gap-3">
+            <FootballFeedLogo size={40} />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
+              {APP_NAME}
+            </h1>
+          </div>
           <button
             onClick={() => setRefreshKey((k) => k + 1)}
             className="text-xs text-zinc-400 hover:text-white"

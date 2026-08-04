@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Euro Soccer Hub",
-  description: "European soccer news, scores, and standings for the Big 5 leagues.",
+  title: "The Football Feed",
+  description: "Football news, scores, and standings for the Big 5 European leagues.",
+  icons: { icon: "/football-feed-icon.svg" },
 };
 
 export default function RootLayout({
