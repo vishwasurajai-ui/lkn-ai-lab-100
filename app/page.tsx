@@ -4,15 +4,26 @@
 // v1.0.0 — European Soccer Hub (news feed UI)
 // ===============================
 // This version:
-// - always-visible News section (mock data, today only)
-// - Follow Teams bar (localStorage)
+// - Today's News: global top 5 (not tied to team picker)
+// - League News: sortable by league/ALL + Follow Teams filter
 // - tab shell: Scores / Standings / Minigames (placeholders)
 // - no backend / API wiring yet
 // ===============================
 
 import { useState, useEffect, useMemo } from "react";
-import { LEAGUES, getLeague, type LeagueId } from "@/lib/leagues";
-import { getMockNews, type NewsArticle } from "@/lib/mock-news";
+import {
+  LEAGUES,
+  ALL_LEAGUES_OPTION,
+  getLeague,
+  getAllTeams,
+  getLeagueForTeam,
+  type LeagueFilter,
+} from "@/lib/leagues";
+import {
+  getGlobalTopNews,
+  getMockNewsForFilter,
+  type NewsArticle,
+} from "@/lib/mock-news";
 import {
   getFollowedTeams,
   toggleFollowedTeam,
@@ -24,6 +35,33 @@ type Tab = "scores" | "standings" | "minigames";
 function articleMentionsTeam(article: NewsArticle, team: string): boolean {
   const haystack = `${article.title} ${article.description}`.toLowerCase();
   return haystack.includes(team.toLowerCase());
+}
+
+function NewsList({ articles, showLeague }: { articles: NewsArticle[]; showLeague?: boolean }) {
+  return (
+    <ul className="space-y-4">
+      {articles.map((article, i) => (
+        <li key={i} className="border-b border-white/5 pb-3 last:border-none last:pb-0">
+          <div className="block group cursor-default">
+            <p className="font-medium text-sm group-hover:text-emerald-400 transition-colors">
+              {article.title}
+            </p>
+            {article.description && (
+              <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{article.description}</p>
+            )}
+            <p className="text-xs text-zinc-500 mt-1">
+              {showLeague && article.league ? `${article.league} · ` : ""}
+              {article.source} ·{" "}
+              {new Date(article.publishedAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 export default function Home() {
@@ -44,15 +82,28 @@ export default function Home() {
   // STATE
   // ===============================
 
-  const [league, setLeague] = useState<LeagueId>("Premier League");
+  const [leagueFilter, setLeagueFilter] = useState<LeagueFilter>("Premier League");
   const [activeTab, setActiveTab] = useState<Tab>("scores");
   const [followedMap, setFollowedMap] = useState<FollowedTeamsMap>({});
   const [showTeamPicker, setShowTeamPicker] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const leagueData = getLeague(league);
-  const followedTeams = followedMap[league] ?? [];
-  const articles = useMemo(() => getMockNews(league), [league, refreshKey]);
+  const isAllLeagues = leagueFilter === ALL_LEAGUES_OPTION;
+  const leagueData = isAllLeagues ? null : getLeague(leagueFilter);
+  const pickerTeams = isAllLeagues ? getAllTeams() : (leagueData?.teams ?? []);
+
+  const followedTeams = useMemo(() => {
+    if (isAllLeagues) {
+      return [...new Set(Object.values(followedMap).flat())];
+    }
+    return followedMap[leagueFilter] ?? [];
+  }, [followedMap, leagueFilter, isAllLeagues]);
+
+  const globalNews = useMemo(() => getGlobalTopNews(5), [refreshKey]);
+  const filterArticles = useMemo(
+    () => getMockNewsForFilter(leagueFilter),
+    [leagueFilter, refreshKey]
+  );
 
   // ===============================
   // FOLLOW TEAMS (localStorage)
@@ -63,16 +114,20 @@ export default function Home() {
   }, []);
 
   const handleToggleTeam = (team: string) => {
-    const next = toggleFollowedTeam(league, team);
+    const storageLeague = isAllLeagues ? getLeagueForTeam(team) : leagueFilter;
+    if (!storageLeague) return;
+    const next = toggleFollowedTeam(storageLeague, team);
     setFollowedMap(next);
   };
 
   const filteredArticles = useMemo(() => {
-    if (followedTeams.length === 0) return articles;
-    return articles.filter((a) =>
+    if (followedTeams.length === 0) return filterArticles;
+    return filterArticles.filter((a) =>
       followedTeams.some((team) => articleMentionsTeam(a, team))
     );
-  }, [articles, followedTeams]);
+  }, [filterArticles, followedTeams]);
+
+  const filterLabel = isAllLeagues ? "all leagues" : leagueFilter;
 
   // ===============================
   // UI
@@ -93,69 +148,44 @@ export default function Home() {
           </button>
         </div>
 
-        {/* League selector */}
-        <select
-          value={league}
-          onChange={(e) => {
-            setLeague(e.target.value as LeagueId);
-            setShowTeamPicker(false);
-          }}
-          className={`w-full p-3 rounded-lg mb-6 ${INPUT_STYLE}`}
-        >
-          {LEAGUES.map((l) => (
-            <option key={l.name} value={l.name}>
-              {l.name}
-            </option>
-          ))}
-        </select>
-
-        {/* News section — always visible */}
+        {/* Today's News — global top 5, no team filter */}
         <section className={`${CARD_STYLE} p-4 mb-6`}>
           <h2 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide mb-3">
             Today&apos;s News
           </h2>
-
-          {articles.length === 0 && (
-            <p className="text-sm text-zinc-400">
-              No headlines today for {league}. Check back later.
-            </p>
-          )}
-
-          {articles.length > 0 && filteredArticles.length === 0 && followedTeams.length > 0 && (
-            <p className="text-sm text-zinc-400">
-              No headlines today mentioning your followed teams.
-            </p>
-          )}
-
-          {filteredArticles.length > 0 && (
-            <ul className="space-y-4">
-              {filteredArticles.map((article, i) => (
-                <li key={i} className="border-b border-white/5 pb-3 last:border-none last:pb-0">
-                  <div className="block group cursor-default">
-                    <p className="font-medium text-sm group-hover:text-emerald-400 transition-colors">
-                      {article.title}
-                    </p>
-                    {article.description && (
-                      <p className="text-xs text-zinc-400 mt-1 line-clamp-2">
-                        {article.description}
-                      </p>
-                    )}
-                    <p className="text-xs text-zinc-500 mt-1">
-                      {article.source} · {new Date(article.publishedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+          {globalNews.length === 0 ? (
+            <p className="text-sm text-zinc-400">No headlines today. Check back later.</p>
+          ) : (
+            <NewsList articles={globalNews} showLeague />
           )}
         </section>
 
-        {/* Follow Teams */}
+        {/* League News — sortable + follow teams */}
         <section className={`${CARD_STYLE} p-4 mb-6`}>
+          <h2 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide mb-3">
+            League News
+          </h2>
+
+          <select
+            value={leagueFilter}
+            onChange={(e) => {
+              setLeagueFilter(e.target.value as LeagueFilter);
+              setShowTeamPicker(false);
+            }}
+            className={`w-full p-3 rounded-lg mb-4 ${INPUT_STYLE}`}
+          >
+            <option value={ALL_LEAGUES_OPTION}>ALL</option>
+            {LEAGUES.map((l) => (
+              <option key={l.name} value={l.name}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide">
+            <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
               Follow Teams
-            </h2>
+            </h3>
             <button
               onClick={() => setShowTeamPicker((v) => !v)}
               className="text-xs text-zinc-400 hover:text-white"
@@ -165,13 +195,13 @@ export default function Home() {
           </div>
 
           {followedTeams.length === 0 && !showTeamPicker && (
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-400 mb-4">
               Follow teams to filter news and scores.
             </p>
           )}
 
           {followedTeams.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mb-4">
               {followedTeams.map((team) => (
                 <button
                   key={team}
@@ -185,8 +215,8 @@ export default function Home() {
           )}
 
           {showTeamPicker && (
-            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-              {leagueData.teams.map((team) => {
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto mb-4">
+              {pickerTeams.map((team) => {
                 const isFollowed = followedTeams.includes(team);
                 return (
                   <button
@@ -201,6 +231,22 @@ export default function Home() {
                 );
               })}
             </div>
+          )}
+
+          {filterArticles.length === 0 && (
+            <p className="text-sm text-zinc-400">
+              No headlines today for {filterLabel}. Check back later.
+            </p>
+          )}
+
+          {filterArticles.length > 0 && filteredArticles.length === 0 && followedTeams.length > 0 && (
+            <p className="text-sm text-zinc-400">
+              No headlines today mentioning your followed teams.
+            </p>
+          )}
+
+          {filteredArticles.length > 0 && (
+            <NewsList articles={filteredArticles} showLeague={isAllLeagues} />
           )}
         </section>
 
@@ -223,12 +269,12 @@ export default function Home() {
         <section className={`${CARD_STYLE} p-6 min-h-[120px] flex items-center justify-center`}>
           {activeTab === "scores" && (
             <p className="text-sm text-zinc-400 text-center">
-              Scores coming in v2 — live fixtures for {league}.
+              Scores coming in v2 — live fixtures for {filterLabel}.
             </p>
           )}
           {activeTab === "standings" && (
             <p className="text-sm text-zinc-400 text-center">
-              Standings coming in v3 — league table for {league}.
+              Standings coming in v3 — league table for {filterLabel}.
             </p>
           )}
           {activeTab === "minigames" && (

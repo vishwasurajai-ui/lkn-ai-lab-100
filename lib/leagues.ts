@@ -5,6 +5,10 @@ export type LeagueId =
   | "Bundesliga"
   | "Ligue 1";
 
+export type LeagueFilter = "ALL" | LeagueId;
+
+export const ALL_LEAGUES_OPTION = "ALL" as const;
+
 export type League = {
   name: LeagueId;
   apiFootballId: number;
@@ -148,4 +152,13 @@ export const LEAGUES: League[] = [
 
 export function getLeague(name: LeagueId): League {
   return LEAGUES.find((l) => l.name === name) ?? LEAGUES[0];
+}
+
+export function getAllTeams(): string[] {
+  return LEAGUES.flatMap((l) => l.teams);
+}
+
+export function getLeagueForTeam(team: string): LeagueId | null {
+  const league = LEAGUES.find((l) => l.teams.includes(team));
+  return league?.name ?? null;
 }

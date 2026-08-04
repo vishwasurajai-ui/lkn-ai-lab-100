@@ -1,4 +1,5 @@
-import type { LeagueId } from "./leagues";
+import type { LeagueId, LeagueFilter } from "./leagues";
+import { LEAGUES } from "./leagues";
 
 export type NewsArticle = {
   title: string;
@@ -6,6 +7,7 @@ export type NewsArticle = {
   url: string;
   publishedAt: string;
   source: string;
+  league?: LeagueId;
 };
 
 function todayIso(hour: number, minute: number): string {
@@ -134,4 +136,25 @@ const MOCK_BY_LEAGUE: Record<LeagueId, NewsArticle[]> = {
 
 export function getMockNews(league: LeagueId): NewsArticle[] {
   return MOCK_BY_LEAGUE[league] ?? [];
+}
+
+function getAllArticles(): NewsArticle[] {
+  return LEAGUES.flatMap((l) =>
+    MOCK_BY_LEAGUE[l.name].map((article) => ({ ...article, league: l.name }))
+  );
+}
+
+export function getGlobalTopNews(limit = 5): NewsArticle[] {
+  return getAllArticles()
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    .slice(0, limit);
+}
+
+export function getMockNewsForFilter(filter: LeagueFilter): NewsArticle[] {
+  if (filter === "ALL") {
+    return getAllArticles().sort(
+      (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    );
+  }
+  return getMockNews(filter);
 }
