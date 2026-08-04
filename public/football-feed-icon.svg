@@ -1,9 +1,22 @@
 <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="18" cy="18" r="17" fill="#18181b" stroke="#3f3f46" stroke-width="1"/>
-  <path d="M 18 18 L 18 2 A 16 16 0 0 1 33.657 13.657 Z" fill="#7C3AED" opacity="0.9"/>
-  <path d="M 18 18 L 33.657 13.657 A 16 16 0 0 1 28.284 30.284 Z" fill="#EF4444" opacity="0.9"/>
-  <path d="M 18 18 L 28.284 30.284 A 16 16 0 0 1 7.716 30.284 Z" fill="#3B82F6" opacity="0.9"/>
-  <path d="M 18 18 L 7.716 30.284 A 16 16 0 0 1 2.343 13.657 Z" fill="#F59E0B" opacity="0.9"/>
-  <path d="M 18 18 L 2.343 13.657 A 16 16 0 0 1 18 2 Z" fill="#10B981" opacity="0.9"/>
-  <path d="M18 11 L21.5 14.5 L20 19.5 L16 19.5 L14.5 14.5 Z" fill="#fafafa" stroke="#27272a" stroke-width="0.75"/>
+  <defs>
+    <clipPath id="ballClip">
+      <circle cx="18" cy="18" r="16.5"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#ballClip)">
+    <circle cx="18" cy="18" r="16.5" fill="#f4f4f5"/>
+    <path d="M 18.00 12.10 L 20.68 13.65 L 20.68 16.75 L 18.00 18.30 L 15.32 16.75 L 15.32 13.65 Z" fill="#f4f4f5" stroke="#27272a" stroke-width="0.6" stroke-linejoin="round"/>
+    <path d="M 23.87 14.35 L 26.55 15.90 L 26.55 19.00 L 23.87 20.55 L 21.19 19.00 L 21.19 15.90 Z" fill="#f4f4f5" stroke="#27272a" stroke-width="0.6" stroke-linejoin="round"/>
+    <path d="M 22.46 21.35 L 25.14 22.90 L 25.14 26.00 L 22.46 27.55 L 19.78 26.00 L 19.78 22.90 Z" fill="#f4f4f5" stroke="#27272a" stroke-width="0.6" stroke-linejoin="round"/>
+    <path d="M 13.54 21.35 L 16.22 22.90 L 16.22 26.00 L 13.54 27.55 L 10.86 26.00 L 10.86 22.90 Z" fill="#f4f4f5" stroke="#27272a" stroke-width="0.6" stroke-linejoin="round"/>
+    <path d="M 12.13 14.35 L 14.81 15.90 L 14.81 19.00 L 12.13 20.55 L 9.45 19.00 L 9.45 15.90 Z" fill="#f4f4f5" stroke="#27272a" stroke-width="0.6" stroke-linejoin="round"/>
+    <path d="M 18.00 6.10 L 21.90 8.93 L 20.43 13.45 L 15.57 13.45 L 14.10 8.93 Z" fill="#7C3AED" stroke="#27272a" stroke-width="0.65" stroke-linejoin="round"/>
+    <path d="M 27.70 12.35 L 31.60 15.18 L 30.13 19.70 L 25.27 19.70 L 23.80 15.18 Z" fill="#EF4444" stroke="#27272a" stroke-width="0.65" stroke-linejoin="round"/>
+    <path d="M 24.46 25.35 L 28.36 28.18 L 26.89 32.70 L 22.03 32.70 L 20.56 28.18 Z" fill="#3B82F6" stroke="#27272a" stroke-width="0.65" stroke-linejoin="round"/>
+    <path d="M 11.54 25.35 L 15.44 28.18 L 13.97 32.70 L 9.11 32.70 L 7.64 28.18 Z" fill="#F59E0B" stroke="#27272a" stroke-width="0.65" stroke-linejoin="round"/>
+    <path d="M 8.30 12.35 L 12.20 15.18 L 10.73 19.70 L 5.87 19.70 L 4.40 15.18 Z" fill="#10B981" stroke="#27272a" stroke-width="0.65" stroke-linejoin="round"/>
+    <path d="M 18.00 13.80 L 21.90 16.63 L 20.43 21.15 L 15.57 21.15 L 14.10 16.63 Z" fill="#ffffff" stroke="#27272a" stroke-width="0.65" stroke-linejoin="round"/>
+  </g>
+  <circle cx="18" cy="18" r="16.5" stroke="#52525b" stroke-width="0.75" fill="none"/>
 </svg>

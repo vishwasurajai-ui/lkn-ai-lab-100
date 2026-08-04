@@ -1,7 +1,33 @@
 // Big 5 league-inspired colors: PL, La Liga, Serie A, Bundesliga, Ligue 1
 const LEAGUE_COLORS = ["#7C3AED", "#EF4444", "#3B82F6", "#F59E0B", "#10B981"];
+const PANEL_STROKE = "#27272a";
+const HEX_FILL = "#f4f4f5";
+
+function toRad(deg: number) {
+  return (deg * Math.PI) / 180;
+}
+
+function pentagonPath(cx: number, cy: number, r: number, rotationDeg: number) {
+  const points = Array.from({ length: 5 }, (_, i) => {
+    const angle = toRad(rotationDeg + i * 72);
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)] as const;
+  });
+  return `M ${points.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(" L ")} Z`;
+}
+
+function hexagonPath(cx: number, cy: number, r: number, rotationDeg: number) {
+  const points = Array.from({ length: 6 }, (_, i) => {
+    const angle = toRad(rotationDeg + i * 60);
+    return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)] as const;
+  });
+  return `M ${points.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(" L ")} Z`;
+}
 
 export function FootballFeedLogo({ size = 36 }: { size?: number }) {
+  const cx = 18;
+  const cy = 18;
+  const outerAngles = [-90, -18, 54, 126, 198];
+
   return (
     <svg
       width={size}
@@ -12,31 +38,57 @@ export function FootballFeedLogo({ size = 36 }: { size?: number }) {
       aria-hidden
       className="shrink-0"
     >
-      <circle cx="18" cy="18" r="17" fill="#18181b" stroke="#3f3f46" strokeWidth="1" />
-      {LEAGUE_COLORS.map((color, i) => {
-        const startAngle = i * 72 - 90;
-        const endAngle = startAngle + 72;
-        const toRad = (deg: number) => (deg * Math.PI) / 180;
-        const x1 = 18 + 16 * Math.cos(toRad(startAngle));
-        const y1 = 18 + 16 * Math.sin(toRad(startAngle));
-        const x2 = 18 + 16 * Math.cos(toRad(endAngle));
-        const y2 = 18 + 16 * Math.sin(toRad(endAngle));
-        return (
-          <path
-            key={color}
-            d={`M 18 18 L ${x1} ${y1} A 16 16 0 0 1 ${x2} ${y2} Z`}
-            fill={color}
-            opacity={0.9}
-          />
-        );
-      })}
-      <path
-        d="M18 11 L21.5 14.5 L20 19.5 L16 19.5 L14.5 14.5 Z"
-        fill="#fafafa"
-        stroke="#27272a"
-        strokeWidth="0.75"
-      />
-      <circle cx="18" cy="18" r="16" fill="none" stroke="#52525b" strokeWidth="0.5" />
+      <defs>
+        <clipPath id="ballClip">
+          <circle cx={cx} cy={cy} r={16.5} />
+        </clipPath>
+      </defs>
+
+      <g clipPath="url(#ballClip)">
+        <circle cx={cx} cy={cy} r={16.5} fill={HEX_FILL} />
+
+        {outerAngles.map((angle, i) => {
+          const rad = toRad(angle);
+          const hx = cx + 6.2 * Math.cos(rad);
+          const hy = cy + 6.2 * Math.sin(rad);
+          return (
+            <path
+              key={`hex-${i}`}
+              d={hexagonPath(hx, hy, 3.1, angle + 30)}
+              fill={HEX_FILL}
+              stroke={PANEL_STROKE}
+              strokeWidth={0.6}
+              strokeLinejoin="round"
+            />
+          );
+        })}
+
+        {outerAngles.map((angle, i) => {
+          const rad = toRad(angle);
+          const px = cx + 10.2 * Math.cos(rad);
+          const py = cy + 10.2 * Math.sin(rad);
+          return (
+            <path
+              key={`pent-${i}`}
+              d={pentagonPath(px, py, 4.1, angle + 90)}
+              fill={LEAGUE_COLORS[i]}
+              stroke={PANEL_STROKE}
+              strokeWidth={0.65}
+              strokeLinejoin="round"
+            />
+          );
+        })}
+
+        <path
+          d={pentagonPath(cx, cy, 4.2, -90)}
+          fill="#ffffff"
+          stroke={PANEL_STROKE}
+          strokeWidth={0.65}
+          strokeLinejoin="round"
+        />
+      </g>
+
+      <circle cx={cx} cy={cy} r={16.5} stroke="#52525b" strokeWidth={0.75} fill="none" />
     </svg>
   );
 }
