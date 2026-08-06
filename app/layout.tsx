@@ -15,7 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "The Football Feed",
   description: "Football news, scores, and standings for the Big 5 European leagues.",
-  icons: { icon: "/football-feed-icon.svg" },
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/football-feed-icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    title: "The Football Feed",
+  },
 };
 
 export default function RootLayout({
