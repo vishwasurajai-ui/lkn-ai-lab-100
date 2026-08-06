@@ -1,16 +1,14 @@
 "use client";
 
 // ===============================
-// v1.0.0 — European Soccer Hub (news feed UI)
+// v1.0.0 — The Football Feed (live news)
 // ===============================
-// This version:
-// - Today's News: global top 5 (not tied to team picker)
-// - League News: sortable by league/ALL + Follow Teams filter
-// - tab shell: Scores / Standings / Minigames (placeholders)
-// - no backend / API wiring yet
+// - Today's News: global top 5 from Supabase (RSS-backed)
+// - League News: filter by league/ALL + Follow Teams
+// - RSS polled via /api/news/poll (cron every 15 min)
 // ===============================
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   LEAGUES,
   ALL_LEAGUES_OPTION,
@@ -19,11 +17,7 @@ import {
   getLeagueForTeam,
   type LeagueFilter,
 } from "@/lib/leagues";
-import {
-  getGlobalTopNews,
-  getMockNewsForFilter,
-  type NewsArticle,
-} from "@/lib/mock-news";
+import type { NewsArticle } from "@/lib/news-types";
 import {
   getFollowedTeams,
   toggleFollowedTeam,
@@ -38,12 +32,23 @@ function articleMentionsTeam(article: NewsArticle, team: string): boolean {
   return haystack.includes(team.toLowerCase());
 }
 
-function NewsList({ articles, showLeague }: { articles: NewsArticle[]; showLeague?: boolean }) {
+function NewsList({
+  articles,
+  showLeague,
+}: {
+  articles: NewsArticle[];
+  showLeague?: boolean;
+}) {
   return (
     <ul className="space-y-4">
-      {articles.map((article, i) => (
-        <li key={i} className="border-b border-zinc-300 pb-3 last:border-none last:pb-0">
-          <div className="block group cursor-default">
+      {articles.map((article) => (
+        <li key={article.url} className="border-b border-zinc-300 pb-3 last:border-none last:pb-0">
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block group"
+          >
             <p className="font-medium text-sm text-zinc-900 group-hover:text-emerald-600 transition-colors">
               {article.title}
             </p>
@@ -58,7 +63,7 @@ function NewsList({ articles, showLeague }: { articles: NewsArticle[]; showLeagu
                 minute: "2-digit",
               })}
             </p>
-          </div>
+          </a>
         </li>
       ))}
     </ul>
@@ -66,10 +71,6 @@ function NewsList({ articles, showLeague }: { articles: NewsArticle[]; showLeagu
 }
 
 export default function Home() {
-  // ===============================
-  // CONFIG (CUSTOMIZE YOUR APP)
-  // ===============================
-
   const APP_NAME = "The Football Feed";
   const BACKGROUND = "bg-zinc-200 text-zinc-900";
   const CARD_STYLE = "bg-zinc-100 border border-zinc-300 rounded-xl shadow-sm";
@@ -79,15 +80,17 @@ export default function Home() {
   const CHIP_ACTIVE = "bg-emerald-600 text-white border-emerald-600";
   const CHIP_INACTIVE = "bg-zinc-200 text-zinc-800 border-zinc-400 hover:border-zinc-500";
 
-  // ===============================
-  // STATE
-  // ===============================
-
   const [leagueFilter, setLeagueFilter] = useState<LeagueFilter>("Premier League");
   const [activeTab, setActiveTab] = useState<Tab>("scores");
   const [followedMap, setFollowedMap] = useState<FollowedTeamsMap>({});
   const [showTeamPicker, setShowTeamPicker] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [globalNews, setGlobalNews] = useState<NewsArticle[]>([]);
+  const [filterArticles, setFilterArticles] = useState<NewsArticle[]>([]);
+  const [globalLoading, setGlobalLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(true);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [filterError, setFilterError] = useState<string | null>(null);
 
   const isAllLeagues = leagueFilter === ALL_LEAGUES_OPTION;
   const leagueData = isAllLeagues ? null : getLeague(leagueFilter);
@@ -100,19 +103,53 @@ export default function Home() {
     return followedMap[leagueFilter] ?? [];
   }, [followedMap, leagueFilter, isAllLeagues]);
 
-  const globalNews = useMemo(() => getGlobalTopNews(5), [refreshKey]);
-  const filterArticles = useMemo(
-    () => getMockNewsForFilter(leagueFilter),
-    [leagueFilter, refreshKey]
-  );
+  const fetchGlobalNews = useCallback(async () => {
+    setGlobalLoading(true);
+    setGlobalError(null);
+    try {
+      const res = await fetch("/api/news?scope=global&limit=5");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to load news.");
+      setGlobalNews(data.articles ?? []);
+    } catch (err) {
+      setGlobalError(err instanceof Error ? err.message : "Failed to load news.");
+      setGlobalNews([]);
+    } finally {
+      setGlobalLoading(false);
+    }
+  }, []);
 
-  // ===============================
-  // FOLLOW TEAMS (localStorage)
-  // ===============================
+  const fetchLeagueNews = useCallback(async () => {
+    setFilterLoading(true);
+    setFilterError(null);
+    try {
+      const res = await fetch(`/api/news?league=${encodeURIComponent(leagueFilter)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to load news.");
+      setFilterArticles(data.articles ?? []);
+    } catch (err) {
+      setFilterError(err instanceof Error ? err.message : "Failed to load news.");
+      setFilterArticles([]);
+    } finally {
+      setFilterLoading(false);
+    }
+  }, [leagueFilter]);
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([fetchGlobalNews(), fetchLeagueNews()]);
+  }, [fetchGlobalNews, fetchLeagueNews]);
 
   useEffect(() => {
     setFollowedMap(getFollowedTeams());
   }, []);
+
+  useEffect(() => {
+    fetchGlobalNews();
+  }, [fetchGlobalNews]);
+
+  useEffect(() => {
+    fetchLeagueNews();
+  }, [fetchLeagueNews]);
 
   const handleToggleTeam = (team: string) => {
     const storageLeague = isAllLeagues ? getLeagueForTeam(team) : leagueFilter;
@@ -130,15 +167,10 @@ export default function Home() {
 
   const filterLabel = isAllLeagues ? "all leagues" : leagueFilter;
 
-  // ===============================
-  // UI
-  // ===============================
-
   return (
     <main className={`min-h-screen ${BACKGROUND} flex justify-center pt-8 pb-12 px-4`}>
       <div className="w-full max-w-xl">
 
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <FootballFeedLogo size={40} />
@@ -147,26 +179,32 @@ export default function Home() {
             </h1>
           </div>
           <button
-            onClick={() => setRefreshKey((k) => k + 1)}
-            className="text-xs text-zinc-500 hover:text-zinc-900"
+            onClick={refreshAll}
+            disabled={globalLoading || filterLoading}
+            className="text-xs text-zinc-500 hover:text-zinc-900 disabled:opacity-50"
           >
-            Refresh
+            {globalLoading || filterLoading ? "Loading..." : "Refresh"}
           </button>
         </div>
 
-        {/* Today's News — global top 5, no team filter */}
         <section className={`${CARD_STYLE} p-4 mb-6`}>
           <h2 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
             Today&apos;s News
           </h2>
-          {globalNews.length === 0 ? (
-            <p className="text-sm text-zinc-500">No headlines today. Check back later.</p>
-          ) : (
+          {globalLoading && <p className="text-sm text-zinc-500">Loading headlines...</p>}
+          {globalError && !globalLoading && (
+            <p className="text-sm text-red-600">{globalError}</p>
+          )}
+          {!globalLoading && !globalError && globalNews.length === 0 && (
+            <p className="text-sm text-zinc-500">
+              No headlines today yet. News syncs every 15 minutes.
+            </p>
+          )}
+          {!globalLoading && globalNews.length > 0 && (
             <NewsList articles={globalNews} showLeague />
           )}
         </section>
 
-        {/* League News — sortable + follow teams */}
         <section className={`${CARD_STYLE} p-4 mb-6`}>
           <h2 className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-3">
             League News
@@ -239,24 +277,32 @@ export default function Home() {
             </div>
           )}
 
-          {filterArticles.length === 0 && (
+          {filterLoading && <p className="text-sm text-zinc-500">Loading headlines...</p>}
+          {filterError && !filterLoading && (
+            <p className="text-sm text-red-600">{filterError}</p>
+          )}
+
+          {!filterLoading && !filterError && filterArticles.length === 0 && (
             <p className="text-sm text-zinc-500">
               No headlines today for {filterLabel}. Check back later.
             </p>
           )}
 
-          {filterArticles.length > 0 && filteredArticles.length === 0 && followedTeams.length > 0 && (
-            <p className="text-sm text-zinc-500">
-              No headlines today mentioning your followed teams.
-            </p>
-          )}
+          {!filterLoading &&
+            !filterError &&
+            filterArticles.length > 0 &&
+            filteredArticles.length === 0 &&
+            followedTeams.length > 0 && (
+              <p className="text-sm text-zinc-500">
+                No headlines today mentioning your followed teams.
+              </p>
+            )}
 
-          {filteredArticles.length > 0 && (
+          {!filterLoading && filteredArticles.length > 0 && (
             <NewsList articles={filteredArticles} showLeague={isAllLeagues} />
           )}
         </section>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-4">
           {(["scores", "standings", "minigames"] as Tab[]).map((tab) => (
             <button
@@ -271,7 +317,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Tab content */}
         <section className={`${CARD_STYLE} p-6 min-h-[120px] flex items-center justify-center`}>
           {activeTab === "scores" && (
             <p className="text-sm text-zinc-500 text-center">
